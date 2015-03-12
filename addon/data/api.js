@@ -32,11 +32,22 @@ config.style.border = "thin dashed red";
 config.style.padding = "5px 10px 25px 10px";
 config.style.margin = "5px";
 
-var title = document.createElement('p');
-title.id = "nomorvom_config_title";
-title.appendChild(document.createTextNode("Move the sliders to filter results by hygiene rating:"));
+var excludeNoDataLabel = document.createElement('p');
+excludeNoDataLabel.id = "nomorvom_config_title";
+excludeNoDataLabel.appendChild(document.createTextNode("Exclude 'No Result' Entries:"));
 
-config.appendChild(title);
+
+var excludeNoDataCheckbox = document.createElement('input');
+excludeNoDataCheckbox.type = "checkbox"
+excludeNoDataLabel.appendChild(excludeNoDataCheckbox);
+
+config.appendChild(excludeNoDataLabel);
+
+
+var sliderLabel = document.createElement('p');
+sliderLabel.id = "nomorvom_config_title";
+sliderLabel.appendChild(document.createTextNode("Move the sliders to filter results by hygiene rating:"));
+config.appendChild(sliderLabel);
 
 var scoreFilterSlider = document.createElement('div');
 scoreFilterSlider.id = "scoreFilterSlider";
@@ -70,12 +81,18 @@ for (var i = 0; i <= vals; i++) {
 config.appendChild(scoreFilterSlider);
 
 $("div.restaurants").prepend(config);
+alert("foo");
+self.port.on("getElements", function(tag) {
+	var elements = document.getElementsByClassName("restaurantInner");
+	for (var i = 0; i < elements.length; i++) {
+		self.port.emit("gotElement", elements[i].innerHTML);
+	}
+});
 
 restaurantEntries.each(function () {
     var _this = $(this);
-    var name = $("h2.name a:first", this).text().trim(); 
-    var address = $("p.address:first", this).text().trim();
-
+    var name = $("h3.restaurantDetailsName a:first", this).text(); 
+    var address = $("address:first", this).text();
     var url = "http://api.ratings.food.gov.uk/Establishments?name=" + encodeURIComponent(name) + "&address=" + encodeURIComponent(address);
 
     var scorePlaceholder = document.createElement('div');
@@ -105,10 +122,24 @@ restaurantEntries.each(function () {
     
     var rating = 0;
 
+   	let request = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
+              .createInstance(Components.interfaces.nsIXMLHttpRequest);
+	request.onload = function(aEvent) {
+	  window.alert("Response Text: " + aEvent.target.responseText);
+	};
+	request.onerror = function(aEvent) {
+	   window.alert("Error Status: " + aEvent.target.status);
+	};
+	request.open("GET", url, true);
+	request.send(null);
+	
+
+/*
     $.ajax({
         url: url,
         type: 'GET',
         dataType: 'json',
+        crossDomain: true,
         cache: false,
         success: function (data, status) {
 			if (data.establishments.length > 0) {
@@ -156,5 +187,5 @@ restaurantEntries.each(function () {
         },
         error: function (error) { },
         beforeSend: function (xhr) { xhr.setRequestHeader('x-api-version', 2); }
-    });
+    });*/
 });
